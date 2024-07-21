@@ -1,6 +1,6 @@
 {
-  "name": "wxt-starter",
-  "description": "manifest.json description",
+  "name": "font-changer",
+  "description": "Changes the font of all web pages to LXGW WenKai Lite",
   "private": true,
   "version": "0.0.0",
   "scripts": {

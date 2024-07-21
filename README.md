@@ -1,7 +1,6 @@
-# WXT + Svelte
+# Font Changer
 
-This template should help get you started developing with Svelte in WXT.
+Changes the font of all web pages to LXGW WenKai Lite.
+将所有网页的字体修改为霞鹜文楷。
 
-## Recommended IDE Setup
-
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode).
+![cover](./docs/cover.png)
