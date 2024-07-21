@@ -7,7 +7,7 @@ export default defineConfig({
     name: 'Font Changer',
     version: '0.1.0',
     description: 'Changes the font of all web pages to LXGW WenKai Lite',
-    permissions: ['activeTab', 'tabs'],
+    permissions: ['activeTab', 'tabs', 'scripting'],
     host_permissions: ['<all_urls>'],
     web_accessible_resources: [
       {
