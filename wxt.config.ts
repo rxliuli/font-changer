@@ -6,8 +6,14 @@ export default defineConfig({
   manifest: {
     name: 'Font Changer',
     version: '0.1.0',
-    description: 'Changes the font of all web pages to LXGW WenKai Lite',
-    permissions: ['activeTab', 'tabs', 'scripting'],
+    description: 'Changes the font of all web pages',
+    permissions: [
+      'tabs',
+      'scripting',
+      'fontSettings',
+      'storage',
+      'webNavigation',
+    ],
     host_permissions: ['<all_urls>'],
     web_accessible_resources: [
       {
@@ -15,5 +21,8 @@ export default defineConfig({
         matches: ['<all_urls>'],
       },
     ],
+  },
+  runner: {
+    disabled: true,
   },
 })

@@ -1,71 +1,75 @@
-import { PublicPath } from 'wxt/browser'
+import { onMessage, StorageValues } from '@/lib/messaging'
+import { Tabs } from 'wxt/browser'
 
-function getInjectCSS() {
-  const fontFiles: {
-    name: string
-    file: PublicPath
-    weight: string
-    style: string
-  }[] = [
-    {
-      name: 'LXGW WenKai Lite',
-      file: '/LXGWWenKaiLite-Regular.woff2',
-      weight: 'normal',
-      style: 'normal',
-    },
-    {
-      name: 'LXGW WenKai Lite',
-      file: '/LXGWWenKaiLite-Bold.woff2',
-      weight: 'bold',
-      style: 'normal',
-    },
-    {
-      name: 'LXGW WenKai Lite',
-      file: '/LXGWWenKaiLite-Light.woff2',
-      weight: '300',
-      style: 'normal',
-    },
-  ]
+function getInjectCSSByFont(fontId: string) {
+  return `
+    * {
+      font-family: '${fontId}', sans-serif !important;
+    }
+  `
+}
 
-  const css =
-    fontFiles
-      .map(
-        (font) => `
-@font-face {
-  font-family: '${font.name}';
-  src: url('${browser.runtime.getURL(font.file)}') format('woff2');
-  font-weight: ${font.weight};
-  font-style: ${font.style};
-}
-`,
-      )
-      .join('\n') +
-    `
-* {
-  font-family: 'LXGW WenKai Lite', sans-serif !important;
-}
-`
-  return css
+function isValidTab(tab: Tabs.Tab) {
+  return (
+    tab.id &&
+    tab.url &&
+    tab.status === 'complete' &&
+    !tab.url.startsWith('chrome://')
+  )
 }
 
 export default defineBackground(() => {
-  const css = getInjectCSS()
-
-  browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-    if (
-      changeInfo.status === 'complete' &&
-      tab.url &&
-      !tab.url.startsWith('chrome://')
-    ) {
-      try {
-        await browser.scripting.insertCSS({
-          target: { tabId },
-          css,
-        })
-        console.log('Font inserted')
-      } catch (err) {
-        console.error('Failed to insert font', err)
+  let css: string = ''
+  const initCSS = async () => {
+    const fontId = (
+      (await browser.storage.local.get('selectedFontId')) as StorageValues
+    ).selectedFontId
+    css = getInjectCSSByFont(fontId)
+  }
+  browser.runtime.onStartup.addListener(initCSS)
+  browser.runtime.onInstalled.addListener(initCSS)
+  Promise.resolve().then(initCSS)
+  browser.storage.local.onChanged.addListener((changes) => {
+    if ('selectedFontId' in changes) {
+      if (changes.selectedFontId.newValue) {
+        css = getInjectCSSByFont(changes.selectedFontId.newValue)
+      } else {
+        css = ''
       }
     }
   })
+
+  async function injectionCSS(tabId: number, injection: string) {
+    try {
+      await browser.scripting.insertCSS({
+        target: { tabId },
+        css: injection,
+      })
+    } catch (err) {
+      console.warn('Failed to insert font', err, await browser.tabs.get(tabId))
+    }
+  }
+
+  async function refreshTabs() {
+    const fontId = (
+      (await browser.storage.local.get('selectedFontId')) as StorageValues
+    ).selectedFontId
+    if (!fontId) {
+      return
+    }
+    const tabs = (await browser.tabs.query({})).filter(isValidTab)
+    for (const tab of tabs) {
+      await injectionCSS(tab.id!, getInjectCSSByFont(fontId))
+    }
+  }
+
+  browser.runtime.onInstalled.addListener(refreshTabs)
+  browser.webNavigation.onCommitted.addListener(async (details) => {
+    if (details.frameId === 0 && !details.url.startsWith('chrome://')) {
+      await injectionCSS(details.tabId, css)
+    }
+  })
+
+  onMessage('getFontList', () => chrome.fontSettings.getFontList())
+  onMessage('refreshTabs', refreshTabs)
 })
