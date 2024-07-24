@@ -5,7 +5,7 @@ export default defineConfig({
   modules: ['@wxt-dev/module-svelte'],
   manifest: {
     name: 'Font Changer',
-    version: '0.1.0',
+    version: '0.2.0',
     description: 'Changes the font of all web pages',
     permissions: [
       'tabs',
