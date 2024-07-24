@@ -23,7 +23,7 @@
   }
 </script>
 
-<main>
+<main class="p-8">
   <form>
     <div style:font-family={selected} class="mb-6">
       <label for="font" class="block mb-2">Select Font</label>
