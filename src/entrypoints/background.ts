@@ -1,21 +1,28 @@
 import { onMessage, StorageValues } from '@/lib/messaging'
-import { Tabs } from 'wxt/browser'
+import { Scripting, Tabs } from 'wxt/browser'
 
 function getInjectCSSByFont(fontId: string) {
   return `
-    * {
+    *:not([class*='fa-']):not([class*='material-icons']):not(
+        [class*='mdi-']
+      ):not([class*='bi-']):not([class*='ion-']):not([class*='feather-']):not(
+        [class*='la-']
+      ):not([class*='ti-']):not([class*='icon-']):not([class*='lnr-']):not(
+        [class*='octicon-']
+      ):not([class*='wi-']):not([class*='typcn-']):not([class*='devicon-']):not(
+        [class*='pi-']
+      ) {
       font-family: '${fontId}', sans-serif !important;
     }
   `
 }
 
+function isValidURL(url: string) {
+  return url.startsWith('http')
+}
+
 function isValidTab(tab: Tabs.Tab) {
-  return (
-    tab.id &&
-    tab.url &&
-    tab.status === 'complete' &&
-    !tab.url.startsWith('chrome://')
-  )
+  return tab.id && tab.url && isValidURL(tab.url!) && tab.status === 'complete'
 }
 
 export default defineBackground(() => {
@@ -39,12 +46,29 @@ export default defineBackground(() => {
     }
   })
 
-  async function injectionCSS(tabId: number, injection: string) {
+  const list: Scripting.CSSInjection[] = []
+
+  async function injectionCSS(tabId: number, css: string) {
+    const exists = list.findIndex((it) => it.target.tabId === tabId)
+    if (exists >= 0) {
+      const injection = list.splice(exists, 1)[0]
+      try {
+        await browser.scripting.removeCSS(injection)
+      } catch (err) {
+        console.warn(
+          'Failed to remove font',
+          err,
+          await browser.tabs.get(tabId),
+        )
+      }
+    }
     try {
-      await browser.scripting.insertCSS({
+      const injection = {
         target: { tabId },
-        css: injection,
-      })
+        css: css,
+      }
+      await browser.scripting.insertCSS(injection)
+      list.push(injection)
     } catch (err) {
       console.warn('Failed to insert font', err, await browser.tabs.get(tabId))
     }
@@ -63,10 +87,35 @@ export default defineBackground(() => {
     }
   }
 
+  async function uninit() {
+    await Promise.all(
+      list.map(async (injection) => {
+        await browser.scripting.removeCSS(injection)
+      }),
+    )
+    list.length = 0
+  }
+
   browser.runtime.onInstalled.addListener(refreshTabs)
+  browser.runtime.onUpdateAvailable.addListener(async () => {
+    console.log('Update available')
+    await uninit()
+    await refreshTabs()
+  })
   browser.webNavigation.onCommitted.addListener(async (details) => {
-    if (details.frameId === 0 && !details.url.startsWith('chrome://')) {
+    if (details.frameId === 0 && isValidURL(details.url)) {
       await injectionCSS(details.tabId, css)
+    }
+  })
+  browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    if (changeInfo.status === 'complete' && isValidTab(tab)) {
+      await injectionCSS(tabId, css)
+    }
+  })
+  browser.tabs.onRemoved.addListener(async (tabId) => {
+    const index = list.findIndex((it) => it.target.tabId === tabId)
+    if (index >= 0) {
+      list.splice(index, 1)[0]
     }
   })
 
