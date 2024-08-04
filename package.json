@@ -2,7 +2,7 @@
   "name": "font-changer",
   "description": "Changes the font of all web pages to LXGW WenKai Lite",
   "private": true,
-  "version": "0.3.1",
+  "version": "0.3.2",
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
