@@ -1,14 +1,35 @@
 import { onMessage, StorageValues } from '@/lib/messaging'
 import { Scripting, Tabs } from 'wxt/browser'
 
+function css(strings: TemplateStringsArray, ...values: string[]) {
+  return strings.reduce((acc, str, i) => acc + str + (values[i] || ''), '')
+}
+
 function getInjectCSSByFont(fontId: string) {
-  return `
-    * {
+  return css`
+    /* 兼容图标库 */
+    *
+      :not([class*='fa-'])
+      :not([class*='material-icons'])
+      :not([class*='mdi-'])
+      :not([class*='bi-'])
+      :not([class*='ion-'])
+      :not([class*='feather-'])
+      :not([class*='la-'])
+      :not([class*='ti-'])
+      :not([class*='icon-'])
+      :not([class*='lnr-'])
+      :not([class*='octicon-'])
+      :not([class*='wi-'])
+      :not([class*='typcn-'])
+      :not([class*='devicon-'])
+      :not([class*='pi-'])
+      :not([data-gramm='false']) {
       font-family: '${fontId}';
     }
     input,
-    textarea {
-        font-family: '${fontId}' !important;
+    textarea:not([data-gramm='false']) {
+      font-family: '${fontId}' !important;
     }
   `
 }

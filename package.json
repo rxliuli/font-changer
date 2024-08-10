@@ -15,6 +15,8 @@
   },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.4",
+    "@types/chrome": "^0.0.268",
+    "@webext-core/messaging": "^1.4.0",
     "@wxt-dev/module-svelte": "^1.0.0",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.39",
@@ -23,8 +25,9 @@
     "tailwindcss": "^3.4.6",
     "tslib": "^2.6.3",
     "typescript": "^5.5.3",
-    "wxt": "^0.18.15",
-    "@types/chrome": "^0.0.268",
-    "@webext-core/messaging": "^1.4.0"
+    "wxt": "^0.18.15"
+  },
+  "dependencies": {
+    "@webext-core/proxy-service": "^1.2.0"
   }
 }
